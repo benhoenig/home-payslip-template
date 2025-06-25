@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commission Payslip</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* Print settings */
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+        
+        /* Global styles */
+        body {
+            font-family: 'Kanit', 'Arial', sans-serif;
+            font-weight: 300;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        
+        /* Main container */
+        .payslip-container {
+            width: 190mm;
+            min-height: 277mm;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: center;
+            font-size: 0.70em;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        
+        /* Header section */
+        .header {
+            background-color: #001f1e;
+            color: white;
+            padding: 30px 30px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 400;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            width: 100px;
+            height: auto;
+            background-color: transparent;
+        }
+        
+        /* Information sections */
+        .info-section {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .personal-info, 
+        .company-info {
+            width: 48%;
+        }
+        
+        .info-row {
+            margin-bottom: 8px;
+            display: flex;
+        }
+        
+        .info-label {
+            font-weight: 400;
+            width: 100px;
+        }
+        
+        .info-value {
+            flex: 1;
+        }
+        
+        /* Table styles */
+        .table-container {
+            padding: 12px 20px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            table-layout: fixed;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+            font-size: 0.85em;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: 400;
+            text-align: center;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        /* Column specific styles */
+        th:first-child, td:first-child {
+            width: 8%;
+            text-align: center;
+        }
+        
+        th:nth-child(2), td:nth-child(2) {
+            width: 35%;
+            text-align: left;
+        }
+        
+        th:nth-child(3), td:nth-child(3),
+        th:nth-child(4), td:nth-child(4),
+        th:nth-child(5), td:nth-child(5),
+        th:nth-child(6), td:nth-child(6) {
+            width: 14%;
+            text-align: right;
+        }
+        
+        /* Summary section */
+        .summary-section {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 20px;
+        }
+        
+        .notes {
+            width: 58%;
+        }
+        
+        .notes h3 {
+            margin-top: 5px;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+        
+        .notes p {
+            margin-top: 0;
+            font-size: 0.9em;
+        }
+        
+        /* Totals section */
+        .totals {
+            width: 38%;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .total-label {
+            font-weight: 400;
+        }
+        
+        .grand-total {
+            font-size: 18px;
+            font-weight: 500;
+            margin-top: 10px;
+            border-top: 2px solid #333;
+            padding-top: 5px;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 10px;
+            font-size: 10px;
+            color: #777;
+            border-top: 1px solid #eee;
+        }
+        
+        /* Print media query */
+        @media print {
+            body {
+                background-color: white;
+            }
+            .payslip-container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="payslip-container">
+        <div class="header">
+            <div>Commission Payslip</div>
+            <img src="home_logo.png" alt="Company Logo" class="logo">
+        </div>
+        
+        <div class="info-section">
+            <div class="personal-info">
+                <div class="info-row">
+                    <div class="info-label">ชื่อ:</div>
+                    <div class="info-value">{{Sales_Name}} {{Sales_Last_Name}}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">วันที่:</div>
+                    <div class="info-value">{{Payout_Date}}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">ธนาคาร:</div>
+                    <div class="info-value">{{Bank_Account}}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">เลขที่บัญชี:</div>
+                    <div class="info-value">{{Account_Number}}</div>
+                </div>
+            </div>
+            <div class="company-info">
+                <div class="info-value">{{Company_Name_Address}}</div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ลำดับ</th>
+                        <th>รายละเอียดเคส</th>
+                        <th>ค่าคอมมิชชั่น</th>
+                        <th>หลังหัก VAT</th>
+                        <th>เปอร์เซ็นต์จ่าย</th>
+                        <th>ยอดรับสุทธิ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#Case_Items}}
+                    <tr>
+                        <td>{{index}}</td>
+                        <td>{{Case_Details}}</td>
+                        <td>{{Commission}}</td>
+                        <td>{{Commission_After_VAT}}</td>
+                        <td>{{Payout_Percentage}}</td>
+                        <td>{{Net_Receive}}</td>
+                    </tr>
+                    {{/Case_Items}}
+                    <tr>
+                        <td></td>
+                        <td>{{Other_Fees_Description}}</td>
+                        <td colspan="3"></td>
+                        <td>{{Other_Fees}}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>{{Bonus_Deduction_Remark}}</td>
+                        <td colspan="3"></td>
+                        <td>{{Bonus_Deduction}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="summary-section">
+            <div class="notes">
+                <h3>หมายเหตุ:</h3>
+                <p>{{Notes}}</p>
+            </div>
+            <div class="totals">
+                <div class="total-row">
+                    <div class="total-label">ยอดรวม:</div>
+                    <div>{{Subtotal}}</div>
+                </div>
+                <div class="total-row">
+                    <div class="total-label">โบนัส/หักเงิน:</div>
+                    <div>{{Bonus_Deduction}}</div>
+                </div>
+                <div class="total-row">
+                    <div class="total-label">ค่าธรรมเนียมอื่นๆ:</div>
+                    <div>{{Other_Fees}}</div>
+                </div>
+                <div class="grand-total">
+                    <div class="total-label">ยอดจ่ายสุทธิ:</div>
+                    <div>{{Net_Pay}}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>เอกสารฉบับนี้ถูกสร้างขึ้นโดยระบบอิเล็กทรอนิกส์และไม่จำเป็นต้องมีลายเซ็น</p>
+        </div>
+    </div>
+</body>
+</html> 

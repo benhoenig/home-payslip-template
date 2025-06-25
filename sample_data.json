@@ -1,0 +1,33 @@
+{
+  "Sales_Name": "John",
+  "Sales_Last_Name": "Doe",
+  "Payout_Date": "30/06/2023",
+  "Company_Name_Address": "HOME Real Estate Services\n1104/293 Phattanakan Rd,\nSuanlaung, Bangkok 10250",
+  "Bank_Account": "Kasikorn Bank",
+  "Account_Number": "035-8-09258-6",
+  "Case_Items": [
+    {
+      "index": 1,
+      "Case_Details": "บ้านกลางเมือง รามอินทรา 83 สเตชั่น",
+      "Commission": "231,000.00",
+      "Commission_After_VAT": "215,887.85",
+      "Payout_Percentage": "50.00%",
+      "Net_Receive": "107,943.93"
+    },
+    {
+      "index": 2,
+      "Case_Details": "คาซาวิลล์ วงแหวน รามอินทรา #888/30",
+      "Commission": "62,080.00",
+      "Commission_After_VAT": "58,018.69",
+      "Payout_Percentage": "50.00%",
+      "Net_Receive": "29,009.35"
+    }
+  ],
+  "Other_Fees_Description": "Processing Fee",
+  "Other_Fees": "-500.00",
+  "Bonus_Deduction_Remark": "Bonus ค่ากรรมที่ดิน",
+  "Bonus_Deduction": "1,500.00",
+  "Notes": "KPI Mar 42% (Mar 80-42=38%)\nKPI Apr 68% (Apr 80-68=12%)\nKPI May 79.8% (May 80-79.8=0.2%)\n= 38+12+0.2 = 50.5%",
+  "Subtotal": "138,453.27",
+  "Net_Pay": "139,453.27"
+} 
