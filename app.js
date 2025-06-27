@@ -51,6 +51,14 @@ if (fs.existsSync(logoSource) && !fs.existsSync(logoDestination)) {
   console.log('Logo file copied to public directory');
 }
 
+// Copy sample_data.json to public directory if it doesn't exist there
+const sampleDataSource = path.join(__dirname, 'sample_data.json');
+const sampleDataDestination = path.join(publicDir, 'sample_data.json');
+if (fs.existsSync(sampleDataSource) && !fs.existsSync(sampleDataDestination)) {
+  fs.copyFileSync(sampleDataSource, sampleDataDestination);
+  console.log('Sample data file copied to public directory');
+}
+
 // Update template to use logo from public directory
 template = template.replace('src="home_logo.svg"', 'src="/home_logo.svg"');
 
@@ -96,6 +104,19 @@ app.get('/', (req, res) => {
 // API Documentation route
 app.get('/api-docs', (req, res) => {
   res.render('api-docs');
+});
+
+// Route to serve sample data JSON directly
+app.get('/sample_data.json', (req, res) => {
+  try {
+    const sampleDataPath = path.join(__dirname, 'sample_data.json');
+    const sampleData = fs.readFileSync(sampleDataPath, 'utf8');
+    res.setHeader('Content-Type', 'application/json');
+    res.send(sampleData);
+  } catch (error) {
+    console.error('Error serving sample data:', error);
+    res.status(500).json({ error: 'Error serving sample data' });
+  }
 });
 
 // Template preview route
