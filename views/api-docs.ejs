@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payslip Generator API Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px 0;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .method {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .method-post {
+            background-color: #28a745;
+        }
+        .method-get {
+            background-color: #007bff;
+        }
+        .endpoint {
+            background-color: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .param-name {
+            font-weight: bold;
+            color: #d63384;
+        }
+        .param-type {
+            color: #0d6efd;
+            font-style: italic;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1>Payslip Generator API Documentation</h1>
+                <p class="lead">This documentation provides information on how to use the Payslip Generator API to create PDF payslips from JSON data.</p>
+                <a href="/" class="btn btn-primary">Back to Dashboard</a>
+            </div>
+        </div>
+
+        <div class="row section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Endpoints</h2>
+                    </div>
+                    <div class="card-body">
+                        <h3>Generate PDF</h3>
+                        <div class="mb-3">
+                            <span class="method method-post">POST</span>
+                            <span class="endpoint">/generate-pdf</span>
+                        </div>
+                        <p>Generates a PDF payslip from the provided JSON data.</p>
+
+                        <h4>Request</h4>
+                        <ul>
+                            <li><strong>Content-Type:</strong> application/json</li>
+                            <li><strong>Body:</strong> JSON object with payslip data (see Data Format section below)</li>
+                        </ul>
+
+                        <h4>Response</h4>
+                        <ul>
+                            <li><strong>Content-Type:</strong> application/pdf</li>
+                            <li><strong>Body:</strong> PDF file</li>
+                        </ul>
+
+                        <h4>Example with cURL</h4>
+                        <pre><code>curl -X POST http://localhost:3000/generate-pdf \
+    -H "Content-Type: application/json" \
+    -d @sample_data.json \
+    --output payslip.pdf</code></pre>
+
+                        <h3 class="mt-5">Preview HTML</h3>
+                        <div class="mb-3">
+                            <span class="method method-post">POST</span>
+                            <span class="endpoint">/preview</span>
+                        </div>
+                        <p>Returns HTML preview of the payslip instead of a PDF. Useful for testing.</p>
+
+                        <h4>Request</h4>
+                        <ul>
+                            <li><strong>Content-Type:</strong> application/json</li>
+                            <li><strong>Body:</strong> JSON object with payslip data (same format as /generate-pdf)</li>
+                        </ul>
+
+                        <h4>Response</h4>
+                        <ul>
+                            <li><strong>Content-Type:</strong> text/html</li>
+                            <li><strong>Body:</strong> HTML content</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Data Format</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>The API expects a JSON object with the following structure:</p>
+
+                        <pre><code>{
+  "Sales_Name": "John",                     // First name of sales person
+  "Sales_Last_Name": "Doe",                 // Last name of sales person
+  "Payout_Date": "30/06/2023",              // Date of payout
+  "Company_Name_Address": "HOME Real Estate Services\n1104/293 Phattanakan Rd,\nSuanlaung, Bangkok 10250",  // Company details (use \n for line breaks)
+  "Bank_Account": "Kasikorn Bank",          // Bank name
+  "Account_Number": "035-8-09258-6",        // Bank account number
+  
+  "Case_Items": [                           // Array of commission cases
+    {
+      "index": 1,                           // Case number
+      "Case_Details": "บ้านกลางเมือง รามอินทรา 83 สเตชั่น",  // Description
+      "Commission": "231,000.00",           // Commission amount
+      "Commission_After_VAT": "215,887.85", // Commission after VAT
+      "Payout_Percentage": "50.00%",        // Percentage of commission
+      "Net_Receive": "107,943.93"           // Net amount received
+    },
+    // ... more cases
+  ],
+  
+  "Other_Fees_Description": "Processing Fee",  // Description of other fees
+  "Other_Fees": "-500.00",                     // Amount of other fees
+  
+  "Bonus_Remark": "โบนัส ค่ากรรมที่ดิน",       // Description of bonus
+  "Bonus": "1,500.00",                         // Bonus amount
+  
+  "Deduction_Remark": "หักค่าธรรมเนียมธนาคาร", // Description of deduction
+  "Deduction": "-300.00",                      // Deduction amount
+  
+  "Withholding_Tax": "-1,200.00",              // Withholding tax amount
+  
+  "Notes": "KPI Mar 42% (Mar 80-42=38%)\nKPI Apr 68% (Apr 80-68=12%)\nKPI May 79.8% (May 80-79.8=0.2%)\n= 38+12+0.2 = 50.5%",  // Notes (use \n for line breaks)
+  
+  "Subtotal": "138,453.27",                    // Subtotal amount
+  "Net_Pay": "137,953.27"                      // Final net payment
+}</code></pre>
+
+                        <h3 class="mt-4">Field Descriptions</h3>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="param-name">Sales_Name</td>
+                                    <td class="param-type">String</td>
+                                    <td>First name of the sales person</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Sales_Last_Name</td>
+                                    <td class="param-type">String</td>
+                                    <td>Last name of the sales person</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Payout_Date</td>
+                                    <td class="param-type">String</td>
+                                    <td>Date of the payout (any format)</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Company_Name_Address</td>
+                                    <td class="param-type">String</td>
+                                    <td>Company name and address (use \n for line breaks)</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Bank_Account</td>
+                                    <td class="param-type">String</td>
+                                    <td>Bank name</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Account_Number</td>
+                                    <td class="param-type">String</td>
+                                    <td>Bank account number</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Case_Items</td>
+                                    <td class="param-type">Array</td>
+                                    <td>Array of commission cases</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Other_Fees_Description</td>
+                                    <td class="param-type">String</td>
+                                    <td>Description of other fees</td>
+                                    <td>No</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Other_Fees</td>
+                                    <td class="param-type">String</td>
+                                    <td>Amount of other fees</td>
+                                    <td>No</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Bonus_Remark</td>
+                                    <td class="param-type">String</td>
+                                    <td>Description of bonus</td>
+                                    <td>No</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Bonus</td>
+                                    <td class="param-type">String</td>
+                                    <td>Bonus amount</td>
+                                    <td>No</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Deduction_Remark</td>
+                                    <td class="param-type">String</td>
+                                    <td>Description of deduction</td>
+                                    <td>No</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Deduction</td>
+                                    <td class="param-type">String</td>
+                                    <td>Deduction amount</td>
+                                    <td>No</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Withholding_Tax</td>
+                                    <td class="param-type">String</td>
+                                    <td>Withholding tax amount</td>
+                                    <td>No</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Notes</td>
+                                    <td class="param-type">String</td>
+                                    <td>Additional notes (use \n for line breaks)</td>
+                                    <td>No</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Subtotal</td>
+                                    <td class="param-type">String</td>
+                                    <td>Subtotal amount</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td class="param-name">Net_Pay</td>
+                                    <td class="param-type">String</td>
+                                    <td>Final net payment</td>
+                                    <td>Yes</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Integration with n8n</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>To use this service with n8n workflow automation:</p>
+
+                        <h3>Basic Setup</h3>
+                        <ol>
+                            <li>Add an <strong>HTTP Request</strong> node to your workflow</li>
+                            <li>Set the method to <strong>POST</strong></li>
+                            <li>Set the URL to <code>http://your-server:3000/generate-pdf</code></li>
+                            <li>Set "Send Binary Data" to <strong>false</strong></li>
+                            <li>Set "Response Format" to <strong>File</strong></li>
+                            <li>In "JSON/RAW Parameters" provide your payslip data</li>
+                        </ol>
+
+                        <h3>Example n8n Configuration</h3>
+                        <pre><code>{
+  "url": "http://localhost:3000/generate-pdf",
+  "method": "POST",
+  "authentication": "none",
+  "sendBinaryData": false,
+  "responseFormat": "file",
+  "options": {},
+  "jsonParameters": true,
+  "body": {
+    "Sales_Name": "{{$node["Previous Node"].json.firstName}}",
+    "Sales_Last_Name": "{{$node["Previous Node"].json.lastName}}",
+    "Payout_Date": "{{$node["Previous Node"].json.payoutDate}}",
+    "Company_Name_Address": "{{$node["Previous Node"].json.companyAddress}}",
+    "Bank_Account": "{{$node["Previous Node"].json.bankName}}",
+    "Account_Number": "{{$node["Previous Node"].json.accountNumber}}",
+    "Case_Items": "{{$node["Previous Node"].json.cases}}",
+    "Other_Fees_Description": "{{$node["Previous Node"].json.feesDescription}}",
+    "Other_Fees": "{{$node["Previous Node"].json.fees}}",
+    "Bonus_Remark": "{{$node["Previous Node"].json.bonusRemark}}",
+    "Bonus": "{{$node["Previous Node"].json.bonus}}",
+    "Deduction_Remark": "{{$node["Previous Node"].json.deductionRemark}}",
+    "Deduction": "{{$node["Previous Node"].json.deduction}}",
+    "Withholding_Tax": "{{$node["Previous Node"].json.withholdingTax}}",
+    "Notes": "{{$node["Previous Node"].json.notes}}",
+    "Subtotal": "{{$node["Previous Node"].json.subtotal}}",
+    "Net_Pay": "{{$node["Previous Node"].json.netPay}}"
+  }
+}</code></pre>
+
+                        <h3 class="mt-4">Processing Multiple Payslips</h3>
+                        <p>To process multiple payslips in a batch:</p>
+                        <ol>
+                            <li>Use a <strong>Split In Batches</strong> node before the HTTP Request</li>
+                            <li>Configure it to process your data items one by one</li>
+                            <li>Connect the output to your HTTP Request node</li>
+                            <li>Use expressions like <code>{{$node["Split In Batches"].json.item.firstName}}</code> to access each item</li>
+                        </ol>
+
+                        <h3 class="mt-4">Saving Generated PDFs</h3>
+                        <p>After generating the PDF, you can:</p>
+                        <ul>
+                            <li>Use a <strong>Write Binary File</strong> node to save it to disk</li>
+                            <li>Use a <strong>Send Email</strong> node to email it as an attachment</li>
+                            <li>Use a <strong>Google Drive</strong> node to upload it to Google Drive</li>
+                            <li>Use any other node that can handle binary/file data</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

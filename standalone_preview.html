@@ -3,6 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payslip Preview (Standalone)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/4.2.0/mustache.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Kanit', Arial, sans-serif;
+            font-weight: 300;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        #preview-container {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin: 0 auto;
+            max-width: 210mm;
+        }
+    </style>
+</head>
+<body>
+    <div id="preview-container">
+        <div id="rendered-template"></div>
+    </div>
+
+    <script>
+        // Template HTML
+        const templateHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Commission Payslip</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -227,7 +262,7 @@
                 </div>
             </div>
             <div class="company-info">
-                <div class="info-value">{{Company_Name_Address}}</div>
+                <div class="info-value">{{{Company_Name_Address}}}</div>
             </div>
         </div>
         
@@ -285,7 +320,7 @@
         <div class="summary-section">
             <div class="notes">
                 <h3>หมายเหตุ:</h3>
-                <p>{{Notes}}</p>
+                <p>{{{Notes}}}</p>
             </div>
             <div class="totals">
                 <div class="total-row">
@@ -298,7 +333,7 @@
                 </div>
                 <div class="total-row">
                     <div class="total-label">KPI:</div>
-                    <div>{{Deduction}}</div>
+                    <div class="total-value">{{Deduction}}</div>
                 </div>
                 <div class="total-row">
                     <div class="total-label">ค่าธรรมเนียมอื่นๆ:</div>
@@ -319,5 +354,52 @@
             <p>เอกสารฉบับนี้ถูกสร้างขึ้นโดยระบบอิเล็กทรอนิกส์และไม่จำเป็นต้องมีลายเซ็น</p>
         </div>
     </div>
+</body>
+</html>`;
+
+        // Sample data
+        const sampleData = {
+            "Sales_Name": "John",
+            "Sales_Last_Name": "Doe",
+            "Payout_Date": "30/06/2023",
+            "Company_Name_Address": "HOME Real Estate Services<br>1104/293 Phattanakan Rd,<br>Suanlaung, Bangkok 10250",
+            "Bank_Account": "Kasikorn Bank",
+            "Account_Number": "035-8-09258-6",
+            "Case_Items": [
+                {
+                "index": 1,
+                "Case_Details": "บ้านกลางเมือง รามอินทรา 83 สเตชั่น",
+                "Commission": "231,000.00",
+                "Commission_After_VAT": "215,887.85",
+                "Payout_Percentage": "50.00%",
+                "Net_Receive": "107,943.93"
+                },
+                {
+                "index": 2,
+                "Case_Details": "คาซาวิลล์ วงแหวน รามอินทรา #888/30",
+                "Commission": "62,080.00",
+                "Commission_After_VAT": "58,018.69",
+                "Payout_Percentage": "50.00%",
+                "Net_Receive": "29,009.35"
+                }
+            ],
+            "Other_Fees_Description": "Processing Fee",
+            "Other_Fees": "-500.00",
+            "Bonus_Remark": "โบนัส ค่ากรรมที่ดิน",
+            "Bonus": "1,500.00",
+            "Deduction_Remark": "หักค่าธรรมเนียมธนาคาร",
+            "Deduction": "-300.00",
+            "Withholding_Tax": "-1,200.00",
+            "Notes": "KPI Mar 42% (Mar 80-42=38%)<br>KPI Apr 68% (Apr 80-68=12%)<br>KPI May 79.8% (May 80-79.8=0.2%)<br>= 38+12+0.2 = 50.5%",
+            "Subtotal": "138,453.27",
+            "Net_Pay": "137,953.27"
+        };
+
+        // Render the template with the sample data
+        document.addEventListener('DOMContentLoaded', function() {
+            const renderedTemplate = Mustache.render(templateHTML, sampleData);
+            document.getElementById('rendered-template').innerHTML = renderedTemplate;
+        });
+    </script>
 </body>
 </html> 

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payslip Generator Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 20px;
+            background-color: #f8f9fa;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-active {
+            background-color: #28a745;
+        }
+        .log-success {
+            border-left: 4px solid #28a745;
+        }
+        .log-error {
+            border-left: 4px solid #dc3545;
+        }
+        .log-info {
+            border-left: 4px solid #17a2b8;
+        }
+        .log-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            background-color: #fff;
+        }
+        .test-form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .preview-container {
+            height: 500px;
+            overflow: auto;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            background-color: #fff;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #001f1e;
+        }
+        .nav-pills .nav-link {
+            color: #001f1e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1>Payslip Generator Dashboard</h1>
+                    <div>
+                        <span class="status-indicator status-active"></span>
+                        <span class="fw-bold">Service Active</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true">Dashboard</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pills-test-tab" data-bs-toggle="pill" data-bs-target="#pills-test" type="button" role="tab" aria-controls="pills-test" aria-selected="false">Test Generator</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pills-docs-tab" data-bs-toggle="pill" data-bs-target="#pills-docs" type="button" role="tab" aria-controls="pills-docs" aria-selected="false">API Documentation</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pills-preview-tab" data-bs-toggle="pill" data-bs-target="#pills-preview" type="button" role="tab" aria-controls="pills-preview" aria-selected="false">Template Preview</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="tab-content" id="pills-tabContent">
+            <!-- Dashboard Tab -->
+            <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="card-title mb-0">Statistics</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <h6>Total Requests</h6>
+                                            <h2><%= stats.totalRequests %></h2>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <h6>Success Rate</h6>
+                                            <h2><%= stats.totalRequests > 0 ? Math.round((stats.successfulRequests / stats.totalRequests) * 100) : 0 %>%</h2>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <h6>Successful</h6>
+                                            <h4 class="text-success"><%= stats.successfulRequests %></h4>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <h6>Failed</h6>
+                                            <h4 class="text-danger"><%= stats.failedRequests %></h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6>Average Processing Time</h6>
+                                    <h4><%= avgProcessingTime %> ms</h4>
+                                </div>
+                                <div class="mb-0">
+                                    <h6>Last Request</h6>
+                                    <p><%= stats.lastRequestTime ? new Date(stats.lastRequestTime).toLocaleString() : 'No requests yet' %></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="card-title mb-0">Quick Links</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    <a href="/template-preview" target="_blank" class="list-group-item list-group-item-action">View Template</a>
+                                    <a href="/sample-preview" target="_blank" class="list-group-item list-group-item-action">View Sample Payslip</a>
+                                    <a href="/api-docs" class="list-group-item list-group-item-action">API Documentation</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="card-title mb-0">Recent Activity Logs</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush">
+                                    <% if (logs.length === 0) { %>
+                                        <div class="p-3 text-center text-muted">No logs yet</div>
+                                    <% } else { %>
+                                        <% logs.forEach(function(log) { %>
+                                            <div class="log-item log-<%= log.type %>">
+                                                <div class="d-flex justify-content-between">
+                                                    <strong><%= log.message %></strong>
+                                                    <small><%= new Date(log.timestamp).toLocaleString() %></small>
+                                                </div>
+                                                <% if (log.details) { %>
+                                                    <div class="mt-2">
+                                                        <% if (typeof log.details === 'object') { %>
+                                                            <% Object.keys(log.details).forEach(function(key) { %>
+                                                                <div><small><strong><%= key %>:</strong> <%= log.details[key] %></small></div>
+                                                            <% }); %>
+                                                        <% } else { %>
+                                                            <div><small><%= log.details %></small></div>
+                                                        <% } %>
+                                                    </div>
+                                                <% } %>
+                                            </div>
+                                        <% }); %>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Generator Tab -->
+            <div class="tab-pane fade" id="pills-test" role="tabpanel" aria-labelledby="pills-test-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="test-form">
+                            <h4>Test Payslip Generator</h4>
+                            <p>Enter JSON data below to test the PDF generation.</p>
+                            
+                            <div class="mb-3">
+                                <label for="jsonData" class="form-label">JSON Data</label>
+                                <textarea class="form-control" id="jsonData" rows="15"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-primary" id="loadSampleBtn">Load Sample Data</button>
+                                <button type="button" class="btn btn-success" id="generatePdfBtn">Generate PDF</button>
+                                <button type="button" class="btn btn-secondary" id="previewHtmlBtn">Preview HTML</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Preview</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="preview-container" id="previewContainer">
+                                    <div class="p-3 text-center text-muted">
+                                        Preview will appear here
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Documentation Tab -->
+            <div class="tab-pane fade" id="pills-docs" role="tabpanel" aria-labelledby="pills-docs-tab">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="card-title mb-0">API Documentation</h5>
+                    </div>
+                    <div class="card-body">
+                        <h4>Endpoints</h4>
+                        
+                        <div class="mb-4">
+                            <h5>Generate PDF</h5>
+                            <p><code>POST /generate-pdf</code></p>
+                            <p>Generates a PDF from the provided JSON data.</p>
+                            
+                            <h6>Request</h6>
+                            <ul>
+                                <li><strong>Content-Type:</strong> application/json</li>
+                                <li><strong>Body:</strong> JSON object with payslip data</li>
+                            </ul>
+                            
+                            <h6>Response</h6>
+                            <ul>
+                                <li><strong>Content-Type:</strong> application/pdf</li>
+                                <li><strong>Body:</strong> PDF file</li>
+                            </ul>
+                            
+                            <h6>Example with cURL</h6>
+                            <pre class="bg-light p-3"><code>curl -X POST http://localhost:3000/generate-pdf \
+    -H "Content-Type: application/json" \
+    -d @sample_data.json \
+    --output payslip.pdf</code></pre>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5>Preview HTML</h5>
+                            <p><code>POST /preview</code></p>
+                            <p>Returns HTML preview of the payslip instead of a PDF.</p>
+                            
+                            <h6>Request</h6>
+                            <ul>
+                                <li><strong>Content-Type:</strong> application/json</li>
+                                <li><strong>Body:</strong> JSON object with payslip data</li>
+                            </ul>
+                            
+                            <h6>Response</h6>
+                            <ul>
+                                <li><strong>Content-Type:</strong> text/html</li>
+                                <li><strong>Body:</strong> HTML content</li>
+                            </ul>
+                        </div>
+                        
+                        <h4>Integration with n8n</h4>
+                        <p>To use this service with n8n:</p>
+                        <ol>
+                            <li>Add an <strong>HTTP Request</strong> node</li>
+                            <li>Set the method to <strong>POST</strong></li>
+                            <li>Set the URL to <code>http://your-server:3000/generate-pdf</code></li>
+                            <li>Set "Send Binary Data" to <strong>false</strong></li>
+                            <li>Set "Response Format" to <strong>File</strong></li>
+                            <li>In "JSON/RAW Parameters" provide your payslip data</li>
+                        </ol>
+                        
+                        <h5>Example n8n Configuration</h5>
+                        <pre class="bg-light p-3"><code>{
+  "url": "http://localhost:3000/generate-pdf",
+  "method": "POST",
+  "authentication": "none",
+  "sendBinaryData": false,
+  "responseFormat": "file",
+  "options": {},
+  "jsonParameters": true,
+  "body": {
+    "Sales_Name": "{{$node["Previous Node"].json.firstName}}",
+    "Sales_Last_Name": "{{$node["Previous Node"].json.lastName}}",
+    "Payout_Date": "{{$node["Previous Node"].json.payoutDate}}",
+    // ... other fields
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Template Preview Tab -->
+            <div class="tab-pane fade" id="pills-preview" role="tabpanel" aria-labelledby="pills-preview-tab">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">Template Preview</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <iframe src="/sample-preview" style="width: 100%; height: 800px; border: none;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const jsonDataTextarea = document.getElementById('jsonData');
+            const loadSampleBtn = document.getElementById('loadSampleBtn');
+            const generatePdfBtn = document.getElementById('generatePdfBtn');
+            const previewHtmlBtn = document.getElementById('previewHtmlBtn');
+            const previewContainer = document.getElementById('previewContainer');
+            
+            // Load sample data
+            loadSampleBtn.addEventListener('click', async function() {
+                try {
+                    const response = await fetch('/sample_data.json');
+                    const data = await response.text();
+                    jsonDataTextarea.value = data;
+                } catch (error) {
+                    console.error('Error loading sample data:', error);
+                    alert('Error loading sample data');
+                }
+            });
+            
+            // Generate PDF
+            generatePdfBtn.addEventListener('click', function() {
+                try {
+                    const jsonData = JSON.parse(jsonDataTextarea.value);
+                    
+                    // Create form for file download
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/generate-pdf';
+                    form.target = '_blank';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'json';
+                    input.value = JSON.stringify(jsonData);
+                    
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    
+                    // Submit form to download PDF
+                    form.submit();
+                    document.body.removeChild(form);
+                    
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                    alert('Invalid JSON data');
+                }
+            });
+            
+            // Preview HTML
+            previewHtmlBtn.addEventListener('click', async function() {
+                try {
+                    const jsonData = JSON.parse(jsonDataTextarea.value);
+                    
+                    const response = await fetch('/preview', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(jsonData)
+                    });
+                    
+                    if (response.ok) {
+                        const html = await response.text();
+                        previewContainer.innerHTML = `<iframe srcdoc="${encodeURIComponent(html)}" style="width: 100%; height: 100%; border: none;"></iframe>`;
+                    } else {
+                        const error = await response.json();
+                        previewContainer.innerHTML = `<div class="p-3 text-danger">Error: ${error.error}</div>`;
+                    }
+                } catch (error) {
+                    console.error('Error previewing HTML:', error);
+                    previewContainer.innerHTML = `<div class="p-3 text-danger">Error: ${error.message}</div>`;
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
