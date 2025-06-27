@@ -165,8 +165,15 @@ app.post('/generate-pdf', async (req, res) => {
   stats.lastRequestTime = new Date();
   
   try {
-    // Get data from request body
-    const data = req.body;
+    // Check if data is in req.body directly or in req.body.json
+    let data = req.body;
+    if (req.body.json && typeof req.body.json === 'string') {
+      try {
+        data = JSON.parse(req.body.json);
+      } catch (jsonError) {
+        console.error('Error parsing JSON from form submission:', jsonError);
+      }
+    }
     
     if (!data) {
       const log = addLog('error', 'No data provided');
@@ -268,7 +275,15 @@ app.post('/generate-pdf', async (req, res) => {
 // Preview route (returns HTML instead of PDF)
 app.post('/preview', (req, res) => {
   try {
-    const data = req.body;
+    // Check if data is in req.body directly or in req.body.json
+    let data = req.body;
+    if (req.body.json && typeof req.body.json === 'string') {
+      try {
+        data = JSON.parse(req.body.json);
+      } catch (jsonError) {
+        console.error('Error parsing JSON from form submission:', jsonError);
+      }
+    }
     
     if (!data) {
       return res.status(400).json({ error: 'No data provided' });
@@ -301,7 +316,15 @@ app.post('/preview', (req, res) => {
 // HTML download route (returns HTML as a downloadable file)
 app.post('/download-html', (req, res) => {
   try {
-    const data = req.body;
+    // Check if data is in req.body directly or in req.body.json
+    let data = req.body;
+    if (req.body.json && typeof req.body.json === 'string') {
+      try {
+        data = JSON.parse(req.body.json);
+      } catch (jsonError) {
+        console.error('Error parsing JSON from form submission:', jsonError);
+      }
+    }
     
     if (!data) {
       return res.status(400).json({ error: 'No data provided' });
