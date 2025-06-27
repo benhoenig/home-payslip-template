@@ -208,6 +208,7 @@
                                 <button type="button" class="btn btn-primary" id="loadSampleBtn">Load Sample Data</button>
                                 <button type="button" class="btn btn-success" id="generatePdfBtn">Generate PDF</button>
                                 <button type="button" class="btn btn-secondary" id="previewHtmlBtn">Preview HTML</button>
+                                <button type="button" class="btn btn-info" id="downloadHtmlBtn">Download HTML</button>
                             </div>
                         </div>
                     </div>
@@ -332,6 +333,7 @@
             const loadSampleBtn = document.getElementById('loadSampleBtn');
             const generatePdfBtn = document.getElementById('generatePdfBtn');
             const previewHtmlBtn = document.getElementById('previewHtmlBtn');
+            const downloadHtmlBtn = document.getElementById('downloadHtmlBtn');
             const previewContainer = document.getElementById('previewContainer');
             
             // Load sample data
@@ -398,6 +400,35 @@
                 } catch (error) {
                     console.error('Error previewing HTML:', error);
                     previewContainer.innerHTML = `<div class="p-3 text-danger">Error: ${error.message}</div>`;
+                }
+            });
+
+            // Download HTML
+            downloadHtmlBtn.addEventListener('click', function() {
+                try {
+                    const jsonData = JSON.parse(jsonDataTextarea.value);
+                    
+                    // Create form for file download
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/download-html';
+                    form.target = '_blank';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'json';
+                    input.value = JSON.stringify(jsonData);
+                    
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    
+                    // Submit form to download HTML
+                    form.submit();
+                    document.body.removeChild(form);
+                    
+                } catch (error) {
+                    console.error('Error downloading HTML:', error);
+                    alert('Invalid JSON data');
                 }
             });
         });

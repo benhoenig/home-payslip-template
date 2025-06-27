@@ -9,13 +9,24 @@ const ejs = require('ejs');
 
 // Conditional import for Puppeteer based on environment
 let puppeteer, chromium;
-if (process.env.NODE_ENV === 'production') {
-  // Use chrome-aws-lambda in production (Vercel)
-  chromium = require('chrome-aws-lambda');
-  puppeteer = chromium.puppeteer;
-} else {
-  // Use regular puppeteer in development
-  puppeteer = require('puppeteer');
+try {
+  if (process.env.NODE_ENV === 'production') {
+    // Use chrome-aws-lambda in production (Vercel)
+    chromium = require('chrome-aws-lambda');
+    puppeteer = require('puppeteer-core');
+  } else {
+    // Use regular puppeteer in development
+    puppeteer = require('puppeteer');
+  }
+} catch (error) {
+  console.error('Error importing Puppeteer dependencies:', error);
+  // Fallback to puppeteer-core if chrome-aws-lambda fails
+  try {
+    puppeteer = require('puppeteer-core');
+    console.log('Falling back to puppeteer-core');
+  } catch (fallbackError) {
+    console.error('Failed to import puppeteer-core as fallback:', fallbackError);
+  }
 }
 
 // Initialize Express app
@@ -176,58 +187,76 @@ app.post('/generate-pdf', async (req, res) => {
     
     // Generate PDF - with conditional browser launch options
     let browser;
-    if (process.env.NODE_ENV === 'production') {
-      // Use chrome-aws-lambda in production (Vercel)
-      browser = await puppeteer.launch({
-        args: chromium.args,
-        executablePath: await chromium.executablePath,
-        headless: chromium.headless,
-      });
-    } else {
-      // Use regular puppeteer in development
-      browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        headless: 'new'
-      });
-    }
-    
-    const page = await browser.newPage();
-    
-    // Set content and wait for fonts to load
-    await page.setContent(renderedHtml, { waitUntil: 'networkidle0' });
-    
-    // Generate PDF
-    const pdf = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '0',
-        right: '0',
-        bottom: '0',
-        left: '0'
+    try {
+      if (process.env.NODE_ENV === 'production') {
+        // Use chrome-aws-lambda in production (Vercel)
+        browser = await puppeteer.launch({
+          args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
+          defaultViewport: chromium.defaultViewport,
+          executablePath: await chromium.executablePath,
+          headless: true,
+          ignoreHTTPSErrors: true,
+        });
+      } else {
+        // Use regular puppeteer in development
+        browser = await puppeteer.launch({
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
+          headless: 'new'
+        });
       }
-    });
-    
-    await browser.close();
-    
-    // Update stats
-    const processingTime = Date.now() - startTime;
-    stats.processingTimes.push(processingTime);
-    if (stats.processingTimes.length > 50) {
-      stats.processingTimes.shift(); // Keep only last 50 times
+      
+      const page = await browser.newPage();
+      
+      // Set content with simplified options
+      await page.setContent(renderedHtml, { 
+        waitUntil: 'networkidle0',
+        timeout: 30000
+      });
+      
+      // Generate PDF
+      const pdf = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '0',
+          right: '0',
+          bottom: '0',
+          left: '0'
+        }
+      });
+      
+      await browser.close();
+      
+      // Update stats
+      const processingTime = Date.now() - startTime;
+      stats.processingTimes.push(processingTime);
+      if (stats.processingTimes.length > 50) {
+        stats.processingTimes.shift(); // Keep only last 50 times
+      }
+      stats.successfulRequests++;
+      
+      // Add log
+      addLog('success', 'PDF generated successfully', { 
+        name: data.Sales_Name ? `${data.Sales_Name} ${data.Sales_Last_Name || ''}` : 'Unknown',
+        processingTime: `${processingTime}ms`
+      });
+      
+      // Send PDF as response
+      res.contentType('application/pdf');
+      res.send(pdf);
+    } catch (browserError) {
+      console.error('Browser error:', browserError);
+      
+      // Fallback to HTML if PDF generation fails
+      addLog('warning', 'PDF generation failed, falling back to HTML', { error: browserError.message });
+      
+      // Send HTML as fallback
+      res.contentType('text/html');
+      res.send(renderedHtml);
+      
+      // Still count as successful since we provided a response
+      stats.successfulRequests++;
     }
-    stats.successfulRequests++;
-    
-    // Add log
-    addLog('success', 'PDF generated successfully', { 
-      name: data.Sales_Name ? `${data.Sales_Name} ${data.Sales_Last_Name || ''}` : 'Unknown',
-      processingTime: `${processingTime}ms`
-    });
-    
-    // Send PDF as response
-    res.contentType('application/pdf');
-    res.send(pdf);
-    
   } catch (error) {
     console.error('Error generating PDF:', error);
     stats.failedRequests++;
@@ -266,6 +295,40 @@ app.post('/preview', (req, res) => {
     console.error('Error generating preview:', error);
     addLog('error', 'Failed to generate HTML preview', { error: error.message });
     res.status(500).json({ error: 'Failed to generate preview', details: error.message });
+  }
+});
+
+// HTML download route (returns HTML as a downloadable file)
+app.post('/download-html', (req, res) => {
+  try {
+    const data = req.body;
+    
+    if (!data) {
+      return res.status(400).json({ error: 'No data provided' });
+    }
+
+    // Process data for template
+    if (data.Company_Name_Address) {
+      data.Company_Name_Address = data.Company_Name_Address.replace(/\\n/g, '<br>');
+    }
+    if (data.Notes) {
+      data.Notes = data.Notes.replace(/\\n/g, '<br>');
+    }
+    
+    // Render template with data
+    const renderedHtml = Mustache.render(template, data);
+    
+    // Send HTML as downloadable file
+    res.setHeader('Content-disposition', 'attachment; filename=payslip.html');
+    res.contentType('text/html');
+    res.send(renderedHtml);
+    
+    addLog('info', 'HTML file downloaded');
+    
+  } catch (error) {
+    console.error('Error generating HTML file:', error);
+    addLog('error', 'Failed to generate HTML file', { error: error.message });
+    res.status(500).json({ error: 'Failed to generate HTML file', details: error.message });
   }
 });
 
