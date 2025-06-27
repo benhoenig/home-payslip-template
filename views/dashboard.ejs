@@ -209,6 +209,7 @@
                                 <button type="button" class="btn btn-success" id="generatePdfBtn">Generate PDF</button>
                                 <button type="button" class="btn btn-secondary" id="previewHtmlBtn">Preview HTML</button>
                                 <button type="button" class="btn btn-info" id="downloadHtmlBtn">Download HTML</button>
+                                <button type="button" class="btn btn-warning" id="printToPdfBtn">Print to PDF</button>
                             </div>
                         </div>
                     </div>
@@ -334,6 +335,7 @@
             const generatePdfBtn = document.getElementById('generatePdfBtn');
             const previewHtmlBtn = document.getElementById('previewHtmlBtn');
             const downloadHtmlBtn = document.getElementById('downloadHtmlBtn');
+            const printToPdfBtn = document.getElementById('printToPdfBtn');
             const previewContainer = document.getElementById('previewContainer');
             
             // Load sample data
@@ -439,6 +441,50 @@
                 } catch (error) {
                     console.error('Error downloading HTML:', error);
                     alert('Invalid JSON data');
+                }
+            });
+
+            // Print to PDF
+            printToPdfBtn.addEventListener('click', async function() {
+                try {
+                    const jsonData = JSON.parse(jsonDataTextarea.value);
+                    
+                    const response = await fetch('/preview', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(jsonData)
+                    });
+                    
+                    if (response.ok) {
+                        const html = await response.text();
+                        
+                        // Create a new window for printing
+                        const printWindow = window.open('', '_blank');
+                        if (!printWindow) {
+                            alert('Please allow pop-ups to use the Print to PDF feature');
+                            return;
+                        }
+                        
+                        // Write the HTML content to the new window
+                        printWindow.document.write(html);
+                        printWindow.document.close();
+                        
+                        // Wait for resources to load
+                        printWindow.onload = function() {
+                            // Trigger print dialog
+                            setTimeout(() => {
+                                printWindow.print();
+                                // Don't close the window to allow the user to save as PDF
+                            }, 500);
+                        };
+                    } else {
+                        alert('Error generating preview for printing');
+                    }
+                } catch (error) {
+                    console.error('Error printing to PDF:', error);
+                    alert('Error: ' + error.message);
                 }
             });
         });

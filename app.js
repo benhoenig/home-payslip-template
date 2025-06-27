@@ -197,10 +197,17 @@ app.post('/generate-pdf', async (req, res) => {
     try {
       if (process.env.NODE_ENV === 'production') {
         // Use chrome-aws-lambda in production (Vercel)
+        const executablePath = await chromium.executablePath;
+        
+        if (!executablePath) {
+          console.log('Chromium executable path not found, falling back to HTML');
+          throw new Error('Chromium executable path not found');
+        }
+        
         browser = await puppeteer.launch({
           args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
           defaultViewport: chromium.defaultViewport,
-          executablePath: await chromium.executablePath,
+          executablePath: executablePath,
           headless: true,
           ignoreHTTPSErrors: true,
         });
@@ -257,9 +264,21 @@ app.post('/generate-pdf', async (req, res) => {
       // Fallback to HTML if PDF generation fails
       addLog('warning', 'PDF generation failed, falling back to HTML', { error: browserError.message });
       
+      // Add a message to the HTML about the fallback
+      const fallbackMessage = `
+      <div style="background-color: #fff3cd; color: #856404; padding: 15px; margin-bottom: 20px; border: 1px solid #ffeeba; border-radius: 5px; text-align: center;">
+        <h3>PDF Generation Failed</h3>
+        <p>We were unable to generate a PDF due to technical limitations in the serverless environment.</p>
+        <p>This HTML version is provided as a fallback. You can print this page to PDF using your browser's print function.</p>
+        <p><small>Error: ${browserError.message}</small></p>
+      </div>`;
+      
+      // Insert the message at the beginning of the HTML body
+      const enhancedHtml = renderedHtml.replace('<body>', `<body>${fallbackMessage}`);
+      
       // Send HTML as fallback
       res.contentType('text/html');
-      res.send(renderedHtml);
+      res.send(enhancedHtml);
       
       // Still count as successful since we provided a response
       stats.successfulRequests++;
