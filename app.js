@@ -51,11 +51,19 @@ if (!fs.existsSync(publicDir)) {
   fs.mkdirSync(publicDir);
 }
 
-// Copy logo to public directory if it doesn't exist there
-const logoSource = path.join(__dirname, 'home_logo.svg');
+// Read logo file and convert to base64
+const logoPath = path.join(__dirname, 'home_logo.svg');
+let logoBase64 = '';
+if (fs.existsSync(logoPath)) {
+  const logoData = fs.readFileSync(logoPath);
+  logoBase64 = `data:image/svg+xml;base64,${logoData.toString('base64')}`;
+  console.log('Logo file converted to base64');
+}
+
+// Copy logo to public directory if it doesn't exist there (for backward compatibility)
 const logoDestination = path.join(publicDir, 'home_logo.svg');
-if (fs.existsSync(logoSource) && !fs.existsSync(logoDestination)) {
-  fs.copyFileSync(logoSource, logoDestination);
+if (fs.existsSync(logoPath) && !fs.existsSync(logoDestination)) {
+  fs.copyFileSync(logoPath, logoDestination);
   console.log('Logo file copied to public directory');
 }
 
@@ -67,10 +75,11 @@ if (fs.existsSync(sampleDataSource) && !fs.existsSync(sampleDataDestination)) {
   console.log('Sample data file copied to public directory');
 }
 
-// Update template to use logo from public directory
-// Handle both cases: with and without leading slash
-template = template.replace('src="home_logo.svg"', 'src="/home_logo.svg"');
-template = template.replace('src="/home_logo.svg"', 'src="/home_logo.svg"'); // This ensures the path is correct
+// Update template to use base64 embedded logo
+if (logoBase64) {
+  template = template.replace(/src="[^"]*home_logo\.svg"/, `src="${logoBase64}"`);
+  console.log('Template updated with embedded logo');
+}
 
 // Track statistics
 const stats = {

@@ -239,7 +239,7 @@
     <div class="payslip-container">
         <div class="header">
             <div>Commission Payslip</div>
-            <img src="home_logo.svg" alt="Company Logo" class="logo">
+            <img src="home_logo.svg" alt="Company Logo" class="logo" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNmZmZmZmYiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtc2l6ZT0iMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMwMDFmMWUiPkhPTUU8L3RleHQ+PC9zdmc+'; this.style.border='1px solid #eee';">
         </div>
         
         <div class="info-section">
@@ -262,7 +262,7 @@
                 </div>
             </div>
             <div class="company-info">
-                <div class="info-value">{{{Company_Name_Address}}}</div>
+                <div class="info-value">{{Company_Name_Address}}</div>
             </div>
         </div>
         
@@ -302,7 +302,7 @@
         <div class="summary-section">
             <div class="notes">
                 <h3>หมายเหตุ:</h3>
-                <p>{{{Notes}}}</p>
+                <p>{{Notes}}</p>
             </div>
             <div class="totals">
                 <div class="total-row">
@@ -315,7 +315,7 @@
                 </div>
                 <div class="total-row">
                     <div class="total-label">KPI:</div>
-                    <div class="total-value">{{Deduction}}</div>
+                    <div>{{Deduction}}</div>
                 </div>
                 <div class="total-row">
                     <div class="total-label">ค่าธรรมเนียมอื่นๆ:</div>
@@ -341,47 +341,42 @@
 
         // Sample data
         const sampleData = {
-            "Sales_Name": "John",
-            "Sales_Last_Name": "Doe",
-            "Payout_Date": "30/06/2023",
-            "Company_Name_Address": "HOME Real Estate Services<br>1104/293 Phattanakan Rd,<br>Suanlaung, Bangkok 10250",
-            "Bank_Account": "Kasikorn Bank",
-            "Account_Number": "035-8-09258-6",
-            "Case_Items": [
+            Sales_Name: "John",
+            Sales_Last_Name: "Doe",
+            Payout_Date: "01/01/2023",
+            Bank_Account: "Bank Name",
+            Account_Number: "1234567890",
+            Company_Name_Address: "HOME Company Ltd.<br>123 Main Street<br>Bangkok, Thailand 10330",
+            Case_Items: [
                 {
-                "index": 1,
-                "Case_Details": "บ้านกลางเมือง รามอินทรา 83 สเตชั่น",
-                "Commission": "231,000.00",
-                "Commission_After_VAT": "215,887.85",
-                "Payout_Percentage": "50.00%",
-                "Net_Receive": "107,943.93"
+                    index: 1,
+                    Case_Details: "Property Sale - 123 Main St",
+                    Commission: "฿50,000",
+                    Commission_After_VAT: "฿46,729",
+                    Payout_Percentage: "70%",
+                    Net_Receive: "฿32,710"
                 },
                 {
-                "index": 2,
-                "Case_Details": "คาซาวิลล์ วงแหวน รามอินทรา #888/30",
-                "Commission": "62,080.00",
-                "Commission_After_VAT": "58,018.69",
-                "Payout_Percentage": "50.00%",
-                "Net_Receive": "29,009.35"
+                    index: 2,
+                    Case_Details: "Property Sale - 456 Park Ave",
+                    Commission: "฿35,000",
+                    Commission_After_VAT: "฿32,710",
+                    Payout_Percentage: "70%",
+                    Net_Receive: "฿22,897"
                 }
             ],
-            "Other_Fees_Description": "Processing Fee",
-            "Other_Fees": "-500.00",
-            "Bonus_Remark": "โบนัส ค่ากรรมที่ดิน",
-            "Bonus": "1,500.00",
-            "Deduction_Remark": "หักค่าธรรมเนียมธนาคาร",
-            "Deduction": "-300.00",
-            "WithHolding_Tax": "-1,200.00",
-            "Notes": "KPI Mar 42% (Mar 80-42=38%)<br>KPI Apr 68% (Apr 80-68=12%)<br>KPI May 79.8% (May 80-79.8=0.2%)<br>= 38+12+0.2 = 50.5%",
-            "Subtotal": "138,453.27",
-            "Net_Pay": "137,953.27"
+            Bonus_Remark: "Performance Bonus",
+            Bonus: "฿5,000",
+            Subtotal: "฿55,607",
+            Deduction: "-฿0",
+            Other_Fees: "-฿500",
+            WithHolding_Tax: "-฿2,780",
+            Net_Pay: "฿57,327",
+            Notes: "Thank you for your hard work!"
         };
 
         // Render the template with the sample data
-        document.addEventListener('DOMContentLoaded', function() {
-            const renderedTemplate = Mustache.render(templateHTML, sampleData);
-            document.getElementById('rendered-template').innerHTML = renderedTemplate;
-        });
+        document.getElementById('rendered-template').innerHTML = Mustache.render(templateHTML, sampleData);
     </script>
 </body>
 </html> 
