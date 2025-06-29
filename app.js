@@ -328,11 +328,55 @@ app.post('/generate-pdf', async (req, res) => {
       
       const page = await browser.newPage();
       
-      // Set content with simplified options
+      // Enable request interception for better resource handling
+      await page.setRequestInterception(true);
+      
+      // Track if logo has been requested
+      let logoRequested = false;
+      let logoLoaded = false;
+      
+      // Handle requests
+      page.on('request', request => {
+        if (request.url().includes('home_logo.svg')) {
+          logoRequested = true;
+          console.log('Logo requested:', request.url());
+        }
+        request.continue();
+      });
+      
+      // Handle responses
+      page.on('response', response => {
+        if (response.url().includes('home_logo.svg')) {
+          logoLoaded = true;
+          console.log('Logo loaded:', response.url(), 'Status:', response.status());
+        }
+      });
+      
+      // Set content with improved options for resource loading
       await page.setContent(renderedHtml, { 
-        waitUntil: 'networkidle0',
+        waitUntil: ['networkidle0', 'load', 'domcontentloaded'],
         timeout: 30000
       });
+      
+      // Wait a moment to ensure images are fully loaded
+      await page.waitForTimeout(1000);
+      
+      // Log logo status
+      console.log('Logo status - Requested:', logoRequested, 'Loaded:', logoLoaded);
+      
+      // Embed the logo directly if needed
+      if (!logoLoaded && fs.existsSync(logoSource)) {
+        const logoData = fs.readFileSync(logoSource, 'base64');
+        await page.evaluate((logoData) => {
+          const logoImg = document.querySelector('.logo');
+          if (logoImg) {
+            logoImg.src = `data:image/svg+xml;base64,${logoData}`;
+          }
+        }, logoData);
+        console.log('Embedded logo directly into the page');
+        // Give time for the embedded logo to render
+        await page.waitForTimeout(500);
+      }
       
       // Generate PDF
       const pdf = await page.pdf({
