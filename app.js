@@ -51,13 +51,35 @@ if (!fs.existsSync(publicDir)) {
   fs.mkdirSync(publicDir);
 }
 
-// Read logo file and convert to base64
+// Read logo file and convert to SVG string
 const logoPath = path.join(__dirname, 'home_logo.svg');
-let logoBase64 = '';
+let logoSvg = '';
 if (fs.existsSync(logoPath)) {
-  const logoData = fs.readFileSync(logoPath);
-  logoBase64 = `data:image/svg+xml;base64,${logoData.toString('base64')}`;
-  console.log('Logo file converted to base64');
+  try {
+    console.log(`Reading logo from ${logoPath}`);
+    logoSvg = fs.readFileSync(logoPath, 'utf8');
+    console.log('Logo file read successfully as SVG');
+    
+    // Create a data URL for the image tag
+    const logoBase64 = `data:image/svg+xml;base64,${Buffer.from(logoSvg).toString('base64')}`;
+    
+    // Update template to use embedded logo
+    const originalTemplate = template;
+    template = template.replace(/src="[^"]*home_logo\.svg"/, `src="${logoBase64}"`);
+    
+    if (template !== originalTemplate) {
+      console.log('Template updated with embedded logo successfully');
+    } else {
+      console.error('Failed to update template with embedded logo - regex pattern may not have matched');
+      // Try a more direct replacement as fallback
+      template = template.replace('src="home_logo.svg"', `src="${logoBase64}"`);
+      console.log('Attempted direct replacement as fallback');
+    }
+  } catch (logoError) {
+    console.error('Error reading logo file:', logoError);
+  }
+} else {
+  console.error(`Logo file not found at ${logoPath}`);
 }
 
 // Copy logo to public directory if it doesn't exist there (for backward compatibility)
@@ -73,12 +95,6 @@ const sampleDataDestination = path.join(publicDir, 'sample_data.json');
 if (fs.existsSync(sampleDataSource) && !fs.existsSync(sampleDataDestination)) {
   fs.copyFileSync(sampleDataSource, sampleDataDestination);
   console.log('Sample data file copied to public directory');
-}
-
-// Update template to use base64 embedded logo
-if (logoBase64) {
-  template = template.replace(/src="[^"]*home_logo\.svg"/, `src="${logoBase64}"`);
-  console.log('Template updated with embedded logo');
 }
 
 // Track statistics
