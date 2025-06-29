@@ -358,8 +358,8 @@ app.post('/generate-pdf', async (req, res) => {
         timeout: 30000
       });
       
-      // Wait a moment to ensure images are fully loaded
-      await page.waitForTimeout(1000);
+      // Wait a moment to ensure images are fully loaded (compatible version)
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Log logo status
       console.log('Logo status - Requested:', logoRequested, 'Loaded:', logoLoaded);
@@ -374,8 +374,8 @@ app.post('/generate-pdf', async (req, res) => {
           }
         }, logoData);
         console.log('Embedded logo directly into the page');
-        // Give time for the embedded logo to render
-        await page.waitForTimeout(500);
+        // Give time for the embedded logo to render (compatible version)
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       // Generate PDF
