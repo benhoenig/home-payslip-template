@@ -186,7 +186,58 @@ This will start the server with nodemon, which will automatically restart when y
 
 ### Production Deployment
 
-For production deployment, you can use:
+#### Deploying to Render.com
+
+This application is configured to work properly on Render.com using Docker:
+
+1. **Create a new Web Service on Render**:
+   - Sign in to your Render account
+   - Click "New" and select "Web Service"
+   - Connect your repository or use the "Deploy from GitHub" option
+
+2. **Configure the Web Service**:
+   - Select "Docker" as the Runtime
+   - Set the name for your service (e.g., "payslip-generator")
+   - Choose the branch to deploy from
+   - Select the appropriate instance type (at least 512MB RAM recommended)
+   - Click "Create Web Service"
+
+3. **Environment Variables** (optional):
+   - You can set environment variables in the Render dashboard if needed
+   - No additional environment variables are required for basic functionality
+
+4. **Access Your Deployed Application**:
+   - Once deployed, Render will provide a URL for your application
+   - Access the dashboard at the root URL
+   - Use the `/generate-pdf` endpoint for your n8n integration
+
+5. **Important: Service Type Selection**:
+   - For reliable PDF generation, use a **paid plan** with at least 1GB RAM
+   - Free tier services will go to sleep after inactivity and cause 503 errors
+   - Consider upgrading to a "Standard" or "Pro" plan for production use
+
+6. **Troubleshooting**:
+   - If you encounter issues, check the logs in the Render dashboard
+   - Ensure your repository includes all files (app.js, Dockerfile, package.json, etc.)
+
+#### Deploying to Vercel
+
+This application is also configured to work on Vercel:
+
+1. **Deploy to Vercel**:
+   - Connect your repository to Vercel
+   - Use the provided vercel.json configuration
+
+2. **Configuration**:
+   - The vercel.json file includes settings for memory (3008MB) and timeout (120s)
+   - These settings help prevent PDF generation failures
+
+3. **Limitations**:
+   - Vercel has a serverless architecture which may cause cold start issues
+   - PDF generation is resource-intensive and may occasionally fail
+   - For production use, consider a Docker-based deployment instead
+
+#### Other Deployment Options
 
 1. **Docker:**
 
@@ -202,8 +253,51 @@ npm install -g pm2
 pm2 start app.js --name payslip-generator
 ```
 
-3. **Cloud Platforms:**
-   - Deploy to Heroku, Vercel, AWS, etc. following their respective deployment guides.
+## Troubleshooting
+
+### 503 Service Unavailable Errors
+
+If you encounter 503 errors when using the application:
+
+1. **Service Sleeping**: Free-tier services on platforms like Render and Vercel go to sleep after periods of inactivity. When this happens:
+   - The first request after inactivity will wake up the service but may time out
+   - Simply refresh the page or retry the request after a few seconds
+   - For production use, upgrade to a paid plan that doesn't sleep
+
+2. **Keep-Alive Solution**: To prevent the service from sleeping, you can set up a scheduled task to ping your service every 5-10 minutes:
+   ```bash
+   # Example cron job to ping service every 10 minutes
+   */10 * * * * curl -s https://your-service-url.com/ > /dev/null
+   ```
+
+3. **Resource Limitations**: If you're on a paid plan but still experiencing 503 errors:
+   - Check if your service has enough memory (minimum 1GB recommended)
+   - Increase the timeout settings in your deployment configuration
+   - Check the logs for specific error messages
+
+### PDF Generation Issues
+
+If the service returns HTML instead of a PDF:
+
+1. **Chrome Installation**: The error "Chromium executable path not found" indicates that Chrome is not properly installed or accessible:
+   - Ensure your deployment platform supports Docker for proper Chrome installation
+   - Check that the Dockerfile is correctly configured to install Chrome
+   - Verify that the PUPPETEER_EXECUTABLE_PATH environment variable is set correctly
+
+2. **Memory Issues**: PDF generation requires significant memory:
+   - Increase the memory allocation in your deployment configuration
+   - For Vercel, check the vercel.json file (currently set to 3008MB)
+   - For Render, upgrade to a plan with at least 1GB RAM
+
+3. **Timeout Issues**: PDF generation can take time:
+   - Increase the timeout settings in your deployment configuration
+   - For Vercel, check the maxDuration in vercel.json (currently set to 120s)
+   - For n8n HTTP Request nodes, increase the "Timeout" setting
+
+4. **n8n Configuration**:
+   - Ensure your n8n HTTP Request node has "Response Format" set to "File"
+   - Check that the "Binary Property" is set to "data"
+   - If the PDF still returns as HTML, you can use a "Move Binary Data" node to save the HTML file, then convert it to PDF using your browser's print function
 
 ## License
 

@@ -6,26 +6,23 @@ const path = require('path');
 const morgan = require('morgan');
 const cors = require('cors');
 const ejs = require('ejs');
+const { exec } = require('child_process');
 
-// Conditional import for Puppeteer based on environment
-let puppeteer, chromium;
+// Puppeteer initialization with improved error handling
+let puppeteer;
 try {
-  if (process.env.NODE_ENV === 'production') {
-    // Use chrome-aws-lambda in production (Vercel)
-    chromium = require('chrome-aws-lambda');
-    puppeteer = require('puppeteer-core');
-  } else {
-    // Use regular puppeteer in development
-    puppeteer = require('puppeteer');
-  }
+  // Try to use regular puppeteer first
+  puppeteer = require('puppeteer');
+  console.log('Using standard puppeteer');
 } catch (error) {
-  console.error('Error importing Puppeteer dependencies:', error);
-  // Fallback to puppeteer-core if chrome-aws-lambda fails
+  console.error('Error importing standard puppeteer, trying puppeteer-core:', error);
   try {
+    // Fall back to puppeteer-core
     puppeteer = require('puppeteer-core');
-    console.log('Falling back to puppeteer-core');
+    console.log('Using puppeteer-core');
   } catch (fallbackError) {
-    console.error('Failed to import puppeteer-core as fallback:', fallbackError);
+    console.error('Failed to import puppeteer-core:', fallbackError);
+    throw new Error('Could not initialize any version of Puppeteer');
   }
 }
 
@@ -100,6 +97,87 @@ function addLog(type, message, details = null) {
   }
   return log;
 }
+
+// Chrome diagnostic endpoint
+app.get('/check-chrome', async (req, res) => {
+  try {
+    // Check if Chrome executable exists
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome';
+    const exists = fs.existsSync(executablePath);
+    
+    // Check Chrome with shell command
+    let shellOutput = "";
+    try {
+      shellOutput = await new Promise((resolve, reject) => {
+        exec('which google-chrome && google-chrome --version', (error, stdout, stderr) => {
+          if (error) reject(error);
+          else resolve(stdout);
+        });
+      });
+    } catch (shellError) {
+      shellOutput = `Error: ${shellError.message}`;
+    }
+    
+    // List available Chrome-like binaries
+    let availableBinaries = "";
+    try {
+      availableBinaries = await new Promise((resolve, reject) => {
+        exec('find /usr -name "*chrome*" -type f -executable 2>/dev/null || echo "None found"', (error, stdout, stderr) => {
+          if (error) reject(error);
+          else resolve(stdout);
+        });
+      });
+    } catch (findError) {
+      availableBinaries = `Error: ${findError.message}`;
+    }
+    
+    // Try to launch browser
+    let browserInfo = "Could not launch browser";
+    try {
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: executablePath,
+        headless: 'new',
+        ignoreHTTPSErrors: true,
+      }).catch(e => {
+        throw new Error(`Launch error: ${e.message}`);
+      });
+      
+      const version = await browser.version();
+      browserInfo = `Browser launched successfully. Version: ${version}`;
+      await browser.close();
+    } catch (browserError) {
+      browserInfo = `Browser launch error: ${browserError.message}`;
+    }
+    
+    res.json({
+      puppeteerType: puppeteer.name || "unknown",
+      chromeExecutablePath: executablePath,
+      chromeExists: exists,
+      shellCheck: shellOutput,
+      availableBrowsers: availableBinaries,
+      browserInfo: browserInfo,
+      environment: {
+        NODE_ENV: process.env.NODE_ENV,
+        PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD,
+        PUPPETEER_EXECUTABLE_PATH: process.env.PUPPETEER_EXECUTABLE_PATH
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// System check endpoint
+app.get('/check-system', (req, res) => {
+  exec('uname -a && cat /etc/os-release && ls -la /usr/bin/google* || echo "No Google binaries found"', (error, stdout, stderr) => {
+    res.json({
+      output: stdout,
+      error: error ? error.message : null,
+      stderr: stderr
+    });
+  });
+});
 
 // Dashboard route
 app.get('/', (req, res) => {
@@ -181,6 +259,23 @@ app.post('/generate-pdf', async (req, res) => {
       return res.status(400).json({ error: 'No data provided', log });
     }
 
+    // Map new field names to expected field names
+    if (data["Other Fees"] !== undefined) {
+      data.Other_Fees = data["Other Fees"];
+    }
+    if (data.Bonus_Amount !== undefined) {
+      data.Bonus = data.Bonus_Amount;
+    }
+    if (data.KPI_Deduction_Amount !== undefined) {
+      data.Deduction = data.KPI_Deduction_Amount;
+    }
+    if (data.Remark !== undefined) {
+      data.Notes = data.Remark;
+    }
+    if (data.Other_Remark !== undefined) {
+      data.Other_Fees_Description = data.Other_Remark;
+    }
+
     // Process data for template (handle line breaks)
     if (data.Company_Name_Address) {
       data.Company_Name_Address = data.Company_Name_Address.replace(/\\n/g, '<br>');
@@ -192,32 +287,42 @@ app.post('/generate-pdf', async (req, res) => {
     // Render template with data
     const renderedHtml = Mustache.render(template, data);
     
-    // Generate PDF - with conditional browser launch options
+    // Generate PDF
     let browser;
     try {
-      if (process.env.NODE_ENV === 'production') {
-        // Use chrome-aws-lambda in production (Vercel)
-        const executablePath = await chromium.executablePath;
+      // Determine Chrome executable path with fallbacks
+      let executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+      
+      if (!executablePath) {
+        const possiblePaths = [
+          '/usr/bin/google-chrome',
+          '/usr/bin/google-chrome-stable',
+          '/usr/bin/chromium',
+          '/usr/bin/chromium-browser'
+        ];
         
-        if (!executablePath) {
-          console.log('Chromium executable path not found, falling back to HTML');
-          throw new Error('Chromium executable path not found');
+        for (const path of possiblePaths) {
+          if (fs.existsSync(path)) {
+            executablePath = path;
+            console.log(`Found Chrome at: ${executablePath}`);
+            break;
+          }
         }
         
-        browser = await puppeteer.launch({
-          args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
-          defaultViewport: chromium.defaultViewport,
-          executablePath: executablePath,
-          headless: true,
-          ignoreHTTPSErrors: true,
-        });
-      } else {
-        // Use regular puppeteer in development
-        browser = await puppeteer.launch({
-          args: ['--no-sandbox', '--disable-setuid-sandbox'],
-          headless: 'new'
-        });
+        if (!executablePath) {
+          throw new Error('Chrome executable not found in any of the expected locations');
+        }
       }
+      
+      console.log(`Launching browser with executable path: ${executablePath}`);
+      
+      // Launch browser with appropriate options
+      browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: executablePath,
+        headless: 'new', // Use new headless mode
+        ignoreHTTPSErrors: true,
+      });
       
       const page = await browser.newPage();
       
@@ -308,6 +413,23 @@ app.post('/preview', (req, res) => {
       return res.status(400).json({ error: 'No data provided' });
     }
 
+    // Map new field names to expected field names
+    if (data["Other Fees"] !== undefined) {
+      data.Other_Fees = data["Other Fees"];
+    }
+    if (data.Bonus_Amount !== undefined) {
+      data.Bonus = data.Bonus_Amount;
+    }
+    if (data.KPI_Deduction_Amount !== undefined) {
+      data.Deduction = data.KPI_Deduction_Amount;
+    }
+    if (data.Remark !== undefined) {
+      data.Notes = data.Remark;
+    }
+    if (data.Other_Remark !== undefined) {
+      data.Other_Fees_Description = data.Other_Remark;
+    }
+
     // Process data for template
     if (data.Company_Name_Address) {
       data.Company_Name_Address = data.Company_Name_Address.replace(/\\n/g, '<br>');
@@ -347,6 +469,23 @@ app.post('/download-html', (req, res) => {
     
     if (!data) {
       return res.status(400).json({ error: 'No data provided' });
+    }
+
+    // Map new field names to expected field names
+    if (data["Other Fees"] !== undefined) {
+      data.Other_Fees = data["Other Fees"];
+    }
+    if (data.Bonus_Amount !== undefined) {
+      data.Bonus = data.Bonus_Amount;
+    }
+    if (data.KPI_Deduction_Amount !== undefined) {
+      data.Deduction = data.KPI_Deduction_Amount;
+    }
+    if (data.Remark !== undefined) {
+      data.Notes = data.Remark;
+    }
+    if (data.Other_Remark !== undefined) {
+      data.Other_Fees_Description = data.Other_Remark;
     }
 
     // Process data for template
