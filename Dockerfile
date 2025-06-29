@@ -26,8 +26,8 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies with legacy-peer-deps flag to resolve conflicts
+RUN npm install --legacy-peer-deps
 
 # Copy app source
 COPY . .
