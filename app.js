@@ -68,7 +68,9 @@ if (fs.existsSync(sampleDataSource) && !fs.existsSync(sampleDataDestination)) {
 }
 
 // Update template to use logo from public directory
+// Handle both cases: with and without leading slash
 template = template.replace('src="home_logo.svg"', 'src="/home_logo.svg"');
+template = template.replace('src="/home_logo.svg"', 'src="/home_logo.svg"'); // This ensures the path is correct
 
 // Track statistics
 const stats = {
