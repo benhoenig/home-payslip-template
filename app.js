@@ -328,89 +328,95 @@ app.post('/generate-pdf', async (req, res) => {
       
       const page = await browser.newPage();
       
-      // Enable request interception for better resource handling
-      await page.setRequestInterception(true);
-      
-      // Track if logo has been requested
-      let logoRequested = false;
-      let logoLoaded = false;
-      
-      // Handle requests
-      page.on('request', request => {
-        if (request.url().includes('home_logo.svg')) {
-          logoRequested = true;
-          console.log('Logo requested:', request.url());
-        }
-        request.continue();
-      });
-      
-      // Handle responses
-      page.on('response', response => {
-        if (response.url().includes('home_logo.svg')) {
-          logoLoaded = true;
-          console.log('Logo loaded:', response.url(), 'Status:', response.status());
-        }
-      });
-      
-      // Set content with improved options for resource loading
-      await page.setContent(renderedHtml, { 
-        waitUntil: ['networkidle0', 'load', 'domcontentloaded'],
-        timeout: 30000
-      });
-      
-      // Wait a moment to ensure images are fully loaded (compatible version)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Log logo status
-      console.log('Logo status - Requested:', logoRequested, 'Loaded:', logoLoaded);
-      
-      // Embed the logo directly if needed
-      if (!logoLoaded && fs.existsSync(logoSource)) {
-        const logoData = fs.readFileSync(logoSource, 'base64');
-        await page.evaluate((logoData) => {
-          const logoImg = document.querySelector('.logo');
-          if (logoImg) {
-            logoImg.src = `data:image/svg+xml;base64,${logoData}`;
+      try {
+        // Set content with basic options - keeping it simple for stability
+        await page.setContent(renderedHtml, { 
+          waitUntil: 'networkidle0',
+          timeout: 30000
+        });
+        
+        // Simple wait to ensure resources are loaded
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Generate PDF
+        const pdf = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          margin: {
+            top: '0',
+            right: '0',
+            bottom: '0',
+            left: '0'
           }
-        }, logoData);
-        console.log('Embedded logo directly into the page');
-        // Give time for the embedded logo to render (compatible version)
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-      
-      // Generate PDF
-      const pdf = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: {
-          top: '0',
-          right: '0',
-          bottom: '0',
-          left: '0'
+        });
+        
+        await browser.close();
+        browser = null;
+        
+        // Update stats
+        const processingTime = Date.now() - startTime;
+        stats.processingTimes.push(processingTime);
+        if (stats.processingTimes.length > 50) {
+          stats.processingTimes.shift(); // Keep only last 50 times
         }
-      });
-      
-      await browser.close();
-      
-      // Update stats
-      const processingTime = Date.now() - startTime;
-      stats.processingTimes.push(processingTime);
-      if (stats.processingTimes.length > 50) {
-        stats.processingTimes.shift(); // Keep only last 50 times
+        stats.successfulRequests++;
+        
+        // Add log
+        addLog('success', 'PDF generated successfully', { 
+          name: data.Sales_Name ? `${data.Sales_Name} ${data.Sales_Last_Name || ''}` : 'Unknown',
+          processingTime: `${processingTime}ms`
+        });
+        
+        // Send PDF as response
+        res.contentType('application/pdf');
+        res.send(pdf);
+      } catch (innerError) {
+        console.error('Error during PDF generation:', innerError);
+        
+        // Make sure browser is closed even on error
+        try {
+          if (browser) {
+            await browser.close();
+            browser = null;
+          }
+        } catch (closingError) {
+          console.error('Error closing browser:', closingError);
+        }
+        
+        // Fallback to HTML
+        addLog('warning', 'PDF generation failed, falling back to HTML', { error: innerError.message });
+        
+        // Add a message to the HTML about the fallback
+        const fallbackMessage = `
+        <div style="background-color: #fff3cd; color: #856404; padding: 15px; margin-bottom: 20px; border: 1px solid #ffeeba; border-radius: 5px; text-align: center;">
+          <h3>PDF Generation Failed</h3>
+          <p>We were unable to generate a PDF due to technical limitations in the serverless environment.</p>
+          <p>This HTML version is provided as a fallback. You can print this page to PDF using your browser's print function.</p>
+          <p><small>Error: ${innerError.message}</small></p>
+        </div>`;
+        
+        // Insert the message at the beginning of the HTML body
+        const enhancedHtml = renderedHtml.replace('<body>', `<body>${fallbackMessage}`);
+        
+        // Send HTML as fallback
+        res.contentType('text/html');
+        res.send(enhancedHtml);
+        
+        // Still count as successful since we provided a response
+        stats.successfulRequests++;
       }
-      stats.successfulRequests++;
-      
-      // Add log
-      addLog('success', 'PDF generated successfully', { 
-        name: data.Sales_Name ? `${data.Sales_Name} ${data.Sales_Last_Name || ''}` : 'Unknown',
-        processingTime: `${processingTime}ms`
-      });
-      
-      // Send PDF as response
-      res.contentType('application/pdf');
-      res.send(pdf);
     } catch (browserError) {
       console.error('Browser error:', browserError);
+      
+      // Make sure browser is closed even on error
+      try {
+        if (browser) {
+          await browser.close();
+          browser = null;
+        }
+      } catch (closingError) {
+        console.error('Error closing browser:', closingError);
+      }
       
       // Fallback to HTML if PDF generation fails
       addLog('warning', 'PDF generation failed, falling back to HTML', { error: browserError.message });
