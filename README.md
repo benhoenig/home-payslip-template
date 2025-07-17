@@ -118,6 +118,7 @@ To use this service with n8n workflow automation:
   "body": {
     "Sales_Name": "{{$node[\"Previous Node\"].json.firstName}}",
     "Sales_Last_Name": "{{$node[\"Previous Node\"].json.lastName}}",
+    "Position": "{{$node[\"Previous Node\"].json.position}}",
     "Payout_Date": "{{$node[\"Previous Node\"].json.payoutDate}}",
     "Company_Name_Address": "{{$node[\"Previous Node\"].json.companyAddress}}",
     "Bank_Account": "{{$node[\"Previous Node\"].json.bankName}}",
@@ -145,6 +146,7 @@ The API expects a JSON object with the following structure:
 {
   "Sales_Name": "John",
   "Sales_Last_Name": "Doe",
+  "Position": "Sales Agent",
   "Payout_Date": "30/06/2023",
   "Company_Name_Address": "HOME Real Estate Services\n1104/293 Phattanakan Rd,\nSuanlaung, Bangkok 10250",
   "Bank_Account": "Kasikorn Bank",

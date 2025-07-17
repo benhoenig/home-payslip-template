@@ -249,6 +249,10 @@
                     <div class="info-value">{{Sales_Name}} {{Sales_Last_Name}}</div>
                 </div>
                 <div class="info-row">
+                    <div class="info-label">ตำแหน่ง:</div>
+                    <div class="info-value">{{Position}}</div>
+                </div>
+                <div class="info-row">
                     <div class="info-label">วันที่:</div>
                     <div class="info-value">{{Payout_Date}}</div>
                 </div>
@@ -343,6 +347,7 @@
         const sampleData = {
             Sales_Name: "John",
             Sales_Last_Name: "Doe",
+            Position: "Sales Manager",
             Payout_Date: "01/01/2023",
             Bank_Account: "Bank Name",
             Account_Number: "1234567890",
