@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Commission Payslip</title>
+    <title>Commission Payslip (Non-Sales)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -122,14 +122,13 @@
         }
         
         th:nth-child(2), td:nth-child(2) {
-            width: 35%;
+            width: 50%;
             text-align: left;
         }
         
         th:nth-child(3), td:nth-child(3),
         th:nth-child(4), td:nth-child(4),
-        th:nth-child(5), td:nth-child(5),
-        th:nth-child(6), td:nth-child(6) {
+        th:nth-child(5), td:nth-child(5) {
             width: 14%;
             text-align: right;
         }
@@ -242,9 +241,8 @@
                     <tr>
                         <th>ลำดับ</th>
                         <th>รายละเอียดเคส</th>
-                        <th>ค่าคอมมิชชั่น</th>
-                        <th>หลังหัก VAT</th>
-                        <th>เปอร์เซ็นต์จ่าย</th>
+                        <th>จำนวนต่อหน่วย</th>
+                        <th>หน่วย</th>
                         <th>ยอดรับสุทธิ</th>
                     </tr>
                 </thead>
@@ -253,9 +251,8 @@
                     <tr>
                         <td>{{index}}</td>
                         <td>{{Case_Details}}</td>
-                        <td>{{Commission}}</td>
-                        <td>{{Commission_After_VAT}}</td>
-                        <td>{{Payout_Percentage}}</td>
+                        <td>{{Quantity_Per_Unit}}</td>
+                        <td>{{Unit}}</td>
                         <td>{{Net_Receive}}</td>
                     </tr>
                     {{/Case_Items}}
@@ -264,12 +261,6 @@
                         <td>{{Bonus_Remark}}</td>
                         <td colspan="3"></td>
                         <td>{{Bonus}}</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td>{{Bonus_Remark_Land}}</td>
-                        <td colspan="3"></td>
-                        <td>{{Bonus_Amount_Land}}</td>
                     </tr>
                 </tbody>
             </table>
@@ -313,4 +304,5 @@
         </div>
     </div>
 </body>
-</html> 
+</html>
+

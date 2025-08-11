@@ -41,9 +41,13 @@ app.use(express.static('public')); // Serve static files from 'public' directory
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Load template
-const templatePath = path.join(__dirname, 'payslip_template.html');
-let template = fs.readFileSync(templatePath, 'utf8');
+// Load templates
+const templatePathSales = path.join(__dirname, 'payslip_template.html');
+const templatePathNonSales = path.join(__dirname, 'payslip_template_non_sales.html');
+let templateSales = fs.readFileSync(templatePathSales, 'utf8');
+let templateNonSales = fs.existsSync(templatePathNonSales)
+  ? fs.readFileSync(templatePathNonSales, 'utf8')
+  : null;
 
 // Create public directory if it doesn't exist
 const publicDir = path.join(__dirname, 'public');
@@ -63,17 +67,27 @@ if (fs.existsSync(logoPath)) {
     // Create a data URL for the image tag
     const logoBase64 = `data:image/svg+xml;base64,${Buffer.from(logoSvg).toString('base64')}`;
     
-    // Update template to use embedded logo
-    const originalTemplate = template;
-    template = template.replace(/src="[^"]*home_logo\.svg"/, `src="${logoBase64}"`);
-    
-    if (template !== originalTemplate) {
-      console.log('Template updated with embedded logo successfully');
+    // Update templates to use embedded logo
+    const originalTemplateSales = templateSales;
+    templateSales = templateSales.replace(/src="[^"]*home_logo\.svg"/, `src="${logoBase64}"`);
+    if (templateSales !== originalTemplateSales) {
+      console.log('Sales template updated with embedded logo successfully');
     } else {
-      console.error('Failed to update template with embedded logo - regex pattern may not have matched');
-      // Try a more direct replacement as fallback
-      template = template.replace('src="home_logo.svg"', `src="${logoBase64}"`);
-      console.log('Attempted direct replacement as fallback');
+      console.error('Failed to update sales template with embedded logo - regex pattern may not have matched');
+      templateSales = templateSales.replace('src="home_logo.svg"', `src="${logoBase64}"`);
+      console.log('Attempted direct replacement on sales template as fallback');
+    }
+
+    if (templateNonSales) {
+      const originalTemplateNonSales = templateNonSales;
+      templateNonSales = templateNonSales.replace(/src="[^"]*home_logo\.svg"/, `src="${logoBase64}"`);
+      if (templateNonSales !== originalTemplateNonSales) {
+        console.log('Non-sales template updated with embedded logo successfully');
+      } else {
+        console.error('Failed to update non-sales template with embedded logo - regex pattern may not have matched');
+        templateNonSales = templateNonSales.replace('src="home_logo.svg"', `src="${logoBase64}"`);
+        console.log('Attempted direct replacement on non-sales template as fallback');
+      }
     }
   } catch (logoError) {
     console.error('Error reading logo file:', logoError);
@@ -235,9 +249,24 @@ app.get('/sample_data.json', (req, res) => {
   }
 });
 
+// Helper to determine which template to use based on Position
+function isSalesPosition(position) {
+  if (!position) return true; // default to sales template for backward compatibility
+  return /sale/i.test(String(position));
+}
+
+function pickTemplateForData(data) {
+  const useSales = isSalesPosition(data && data.Position);
+  if (!useSales && templateNonSales) return templateNonSales;
+  return templateSales;
+}
+
 // Template preview route
 app.get('/template-preview', (req, res) => {
-  res.send(template);
+  // Optional query param ?type=non-sales to preview the non-sales template
+  const type = (req.query.type || '').toLowerCase();
+  if (type === 'non-sales' && templateNonSales) return res.send(templateNonSales);
+  res.send(templateSales);
 });
 
 // Sample data preview route
@@ -255,7 +284,8 @@ app.get('/sample-preview', async (req, res) => {
     }
     
     // Render template with sample data
-    const renderedHtml = Mustache.render(template, sampleData);
+    const chosenTemplate = pickTemplateForData(sampleData);
+    const renderedHtml = Mustache.render(chosenTemplate, sampleData);
     res.send(renderedHtml);
   } catch (error) {
     console.error('Error generating sample preview:', error);
@@ -312,7 +342,8 @@ app.post('/generate-pdf', async (req, res) => {
     }
     
     // Render template with data
-    const renderedHtml = Mustache.render(template, data);
+    const chosenTemplate = pickTemplateForData(data);
+    const renderedHtml = Mustache.render(chosenTemplate, data);
     
     // Generate PDF
     let browser;
@@ -516,7 +547,8 @@ app.post('/preview', (req, res) => {
     }
     
     // Render template with data
-    const renderedHtml = Mustache.render(template, data);
+    const chosenTemplate = pickTemplateForData(data);
+    const renderedHtml = Mustache.render(chosenTemplate, data);
     
     // Send HTML as response
     res.contentType('text/html');
@@ -574,7 +606,8 @@ app.post('/download-html', (req, res) => {
     }
     
     // Render template with data
-    const renderedHtml = Mustache.render(template, data);
+    const chosenTemplate = pickTemplateForData(data);
+    const renderedHtml = Mustache.render(chosenTemplate, data);
     
     // Send HTML as downloadable file
     res.setHeader('Content-disposition', 'attachment; filename=payslip.html');
